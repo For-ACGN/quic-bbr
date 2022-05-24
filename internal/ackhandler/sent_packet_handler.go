@@ -3,10 +3,7 @@ package ackhandler
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/For-ACGN/quic-bbr/internal/congestion"
@@ -94,28 +91,14 @@ func NewSentPacketHandler(
 		rttStats:         rttStats,
 		logger:           logger,
 	}
-
-	var cc congestion.SendAlgorithmWithDebugInfos
-	if strings.Contains(os.Getenv("GODEBUG"), "bbr=1") {
-		log.Printf("quic-go: bbr is enabled.")
-		cc = congestion.NewBBRSender(congestion.DefaultClock{},
-			rttStats,
-			protocol.InitialCongestionWindow,
-			protocol.DefaultBBRMaxCongestionWindow,
-			func() protocol.ByteCount {
-				return handler.bytesInFlight
-			},
-		)
-	} else {
-		cc = congestion.NewCubicSender(
-			congestion.DefaultClock{},
-			rttStats,
-			true, // use Reno
-			protocol.InitialCongestionWindow,
-			protocol.DefaultMaxCongestionWindow,
-		)
-	}
-
+	cc := congestion.NewBBRSender(congestion.DefaultClock{},
+		rttStats,
+		protocol.InitialCongestionWindow,
+		protocol.DefaultBBRMaxCongestionWindow,
+		func() protocol.ByteCount {
+			return handler.bytesInFlight
+		},
+	)
 	handler.congestion = cc
 	return handler
 
